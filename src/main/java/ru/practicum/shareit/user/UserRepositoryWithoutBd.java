@@ -2,14 +2,11 @@ package ru.practicum.shareit.user;
 
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exception.DuplicateDataException;
-import ru.practicum.shareit.exception.ObjectNotFoundException;
+import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -64,10 +61,8 @@ public class UserRepositoryWithoutBd implements UserRepository {
 
     @Override
     public UserDto getUser(long id) {
-        if (users.containsKey(id)) {
-            return UserMapper.userToUserDto(users.get(id));
-        }
-        throw new ObjectNotFoundException("Внимание! Пользователя с таким номером не существует!");
+        return UserMapper.userToUserDto(Optional.ofNullable(users.get(id)).orElseThrow(() ->
+                new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!")));
     }
 
     @Override

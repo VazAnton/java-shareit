@@ -2,16 +2,13 @@ package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.exception.ObjectNotFoundException;
+import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.user.UserRepositoryWithoutBd;
 import ru.practicum.shareit.user.dto.UserMapper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -52,7 +49,7 @@ public class ItemRepositoryWithoutDb implements ItemRepository {
                 chosenItem.setAvailable(itemDto.getAvailable());
             }
             if (items.get(itemId).getOwner().getId() != userId) {
-                throw new ObjectNotFoundException("Внимание! Допущена ошибка при указании уникального номера " +
+                throw new EntityNotFoundException("Внимание! Допущена ошибка при указании уникального номера " +
                         "владельца вещи!");
             }
             items.put(itemId, chosenItem);
@@ -62,10 +59,8 @@ public class ItemRepositoryWithoutDb implements ItemRepository {
 
     @Override
     public ItemDto getItem(long id) {
-        if (items.containsKey(id)) {
-            return ItemMapper.itemToItemDto(items.get(id));
-        }
-        throw new ObjectNotFoundException("Внимание! Вещи с такми номером не существует!");
+        return ItemMapper.itemToItemDto(Optional.ofNullable(items.get(id)).orElseThrow(() ->
+                new EntityNotFoundException("Внимание! Вещи с такми номером не существует!")));
     }
 
     @Override

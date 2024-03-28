@@ -2,7 +2,7 @@ package ru.practicum.shareit.item;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.practicum.shareit.exception.ObjectNotFoundException;
+import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
@@ -45,12 +45,12 @@ public class ItemRepositoryWithoutBdTest {
         ItemDto testedItemDto = new ItemDto(0L, "Дрель", "Простая дрель", owner, true,
                 new ItemRequest());
 
-        assertThrows(ObjectNotFoundException.class, () -> itemRepositoryWithoutDb.addItem(testedItemDto, 2L));
+        assertThrows(EntityNotFoundException.class, () -> itemRepositoryWithoutDb.addItem(testedItemDto, 2L));
     }
 
     @Test
     public void getItemShouldThrowNotFoundExceptionIfItemNotExists() {
-        assertThrows(ObjectNotFoundException.class, () -> itemRepositoryWithoutDb.getItem(1L));
+        assertThrows(EntityNotFoundException.class, () -> itemRepositoryWithoutDb.getItem(1L));
     }
 
     @Test

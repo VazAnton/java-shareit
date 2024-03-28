@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.shareit.exception.DuplicateDataException;
-import ru.practicum.shareit.exception.ObjectNotFoundException;
+import ru.practicum.shareit.exception.EntityNotFoundException;
 
 import java.util.Map;
 
@@ -20,7 +20,7 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> notFoundObjectHandler(final ObjectNotFoundException e) {
+    public Map<String, String> notFoundObjectHandler(final EntityNotFoundException e) {
         return Map.of("Объект не найден.", e.getMessage());
     }
 }

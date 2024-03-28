@@ -3,7 +3,7 @@ package ru.practicum.shareit.user;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.practicum.shareit.exception.DuplicateDataException;
-import ru.practicum.shareit.exception.ObjectNotFoundException;
+import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,7 +52,7 @@ public class UserRepositoryWithoutBdTest {
 
     @Test
     public void getUserShouldTrowExceptionIfUserIdNotExists() {
-        assertThrows(ObjectNotFoundException.class, () -> userRepositoryWithoutBd.getUser(9));
+        assertThrows(EntityNotFoundException.class, () -> userRepositoryWithoutBd.getUser(9));
     }
 
     @Test
