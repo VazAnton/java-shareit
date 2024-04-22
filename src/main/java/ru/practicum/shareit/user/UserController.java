@@ -3,7 +3,6 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.mappers.EntityMapper;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import javax.validation.Valid;
