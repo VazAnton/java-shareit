@@ -1,6 +1,5 @@
 package ru.practicum.shareit.mappers;
 
-import org.mapstruct.Mapper;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.LastBooking;
@@ -15,7 +14,6 @@ import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
 
-@Mapper
 public interface EntityMapper {
 
     Booking bookingDtoToBooking(BookingDto bookingDto);
