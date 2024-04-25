@@ -2,6 +2,7 @@ package ru.practicum.shareit.booking;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.item.Item;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
  */
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Data
 @Entity
 @Table(name = "bookings")

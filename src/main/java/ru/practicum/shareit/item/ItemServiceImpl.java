@@ -131,50 +131,47 @@ public class ItemServiceImpl implements ItemService {
     @Transactional(readOnly = true)
     @Override
     public List<ItemDto> getItems(long userId) {
+        List<Item> allItems = itemRepository.findAllByOwnerId(userId);
+        List<Item> itemsWithBookings;
+        List<Booking> bookings;
+        List<ItemDto> result = new ArrayList<>();
         if (userRepository.existsById(userId)) {
-            log.info("Успешно получена информация о всех сохранённых вещах!");
-            List<Item> items = itemRepository.findAllByOwnerId(userId);
-            List<Booking> bookings = bookingRepository.findAllByItemInAndStatusOrderByStartAsc(items, Status.APPROVED);
-            List<Comment> comments = commentRepository.findAllByAuthorId(userId);
-            return items.stream()
-                    .map(item -> setLastAndNextBooking(item, bookings))
-                    .map(itemDto -> setComments(itemDto, comments))
-                    .collect(Collectors.toList());
-//            if (bookingRepository.findAll().isEmpty() /*||
-//                    commentRepository.findAllByAuthorId(userId).isEmpty()*/) {
-//                return itemRepository.findAllByOwnerId(userId).stream()
-//                        .map(entityMapper::itemToItemDto)
+            if (!bookingRepository.getAllBookingsInfoByOwner(userId).isEmpty()) {
+                itemsWithBookings = allItems.stream()
+                        .filter(item -> !bookingRepository.findByItemId(item.getId()).isEmpty())
+                        .collect(Collectors.toList());
+                bookings = bookingRepository.findAllByItemInAndStatusOrderByStartAsc(itemsWithBookings, Status.APPROVED);
+            } else {
+                bookings = bookingRepository.findAllByItemInAndStatusOrderByStartAsc(allItems, Status.APPROVED);
+            }
+                List<Comment> comments = commentRepository.findAllByAuthorId(userId);
+                log.info("Успешно получена информация о всех сохранённых вещах!");
+            for (Item item: allItems) {
+                ItemDto itemDto = setLastAndNextBooking(item, bookings);
+                if (bookingRepository.findByItemId(item.getId()).isEmpty()) {
+                    itemDto.setLastBooking(null);
+                    itemDto.setNextBooking(null);
+                }
+                setComments(itemDto, comments);
+                result.add(itemDto);
+            }
+            return result;
+//                return allItems.stream()
+//                        .map(item -> setLastAndNextBooking(item, bookings))
+//                        .map(itemDto -> setComments(itemDto, comments))
 //                        .collect(Collectors.toList());
-//            }
-////            List<ItemDto> ownersItems = new ArrayList<>();
-////            for (Item item : itemRepository.findAllByOwnerId(userId)) {
-////                ItemDto itemDto;
-////                if (item.getOwner().getId() == userId) {
-////                    itemDto = setComments(setLastAndNextBooking(item,
-////                                    bookingService.getBookingsByOwner(userId, "ALL")),
-////                            commentRepository.findAllByAuthorId(userId));
-////                    ownersItems.add(itemDto);
-////                } else {
-////                    itemDto = entityMapper.itemToItemDto(item);
-////                    itemDto.setLastBooking(null);
-////                    itemDto.setNextBooking(null);
-////                    ownersItems.add(itemDto);
-////                }
-////            }
-////            return ownersItems;
-//            return itemRepository.findAllByOwnerId(userId).stream()
-//                    .map(item -> setLastAndNextBooking(item, bookingService.getBookingsByOwner(userId, "ALL")))
-//                    .map(itemDto -> setComments(itemDto, commentRepository.findAllByAuthorId(userId)))
-//                    .collect(Collectors.toList());
-        }
+            }
         throw new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!");
     }
 
     @Transactional
     @Override
     public void deleteItem(long id) {
-        log.info("Информация о вещи с номером " + id + " успешно удалена!");
-        itemRepository.deleteById(id);
+        if (itemRepository.existsById(id)) {
+            log.info("Информация о вещи с номером " + id + " успешно удалена!");
+            itemRepository.deleteById(id);
+        }
+        throw new EntityNotFoundException("Внимание! Вещи с таким номером не существует!");
     }
 
     @Transactional(readOnly = true)
