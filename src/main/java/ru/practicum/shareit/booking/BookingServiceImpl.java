@@ -26,7 +26,7 @@ public class BookingServiceImpl implements BookingService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final EntityMapper entityMapper;
-    Comparator<Booking> bookingDateComparator = (booking1, booking2) -> {
+    private final Comparator<Booking> bookingDateComparator = (booking1, booking2) -> {
         if (booking1.getStart().isBefore(booking2.getStart())) {
             return 1;
         } else if (booking1.getStart().isAfter(booking2.getStart())) {
