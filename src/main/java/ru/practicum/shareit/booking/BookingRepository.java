@@ -33,8 +33,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findAllByBookerIdAndEndIsBefore(long bookerId, LocalDateTime now);
 
-    List<Booking> findAllByBookerIdAndStartIsAfter(long bookerId, LocalDateTime now);
-
     List<Booking> findAllByBookerIdAndStartIsBeforeOrderByIdAsc(long bookerId, LocalDateTime now);
 
     List<Booking> findByItemId(long itemId);

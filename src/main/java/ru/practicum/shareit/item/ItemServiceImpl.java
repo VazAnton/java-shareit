@@ -13,6 +13,7 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.mappers.EntityMapper;
 import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.UserServiceImpl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,13 +32,13 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
     private final EntityMapper entityMapper;
+    private final UserServiceImpl userService;
 
     @Transactional
     @Override
     public Item addItem(ItemDto itemDto, long userId) {
         Item item = entityMapper.itemDtoToItem(itemDto);
-        item.setOwner(userRepository.findById(userId).orElseThrow(() ->
-                new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!")));
+        item.setOwner(userService.findUser(userId));
         log.info("Информация о новой вещи успешно добавлена!");
         return itemRepository.save(item);
     }
@@ -46,8 +47,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Item updateItem(ItemDto itemDto, long userId, long itemId) {
         if (userRepository.existsById(userId)) {
-            Item itemFromDb = itemRepository.findById(itemId).orElseThrow(() ->
-                    new EntityNotFoundException("Внимание! Вещи с таким номером не существует!"));
+            Item itemFromDb = findItem(itemId);
             Item itemLikeDto = entityMapper.itemDtoToItem(itemDto);
             if (itemLikeDto.getName() != null) {
                 itemFromDb.setName(itemLikeDto.getName());
@@ -66,6 +66,11 @@ public class ItemServiceImpl implements ItemService {
             return itemRepository.save(itemFromDb);
         }
         throw new EntityNotFoundException("Внимание! Пользователя или вещи с таким номером не существует!");
+    }
+
+    public Item findItem(long id) {
+        return itemRepository.findById(id).orElseThrow(() ->
+                new EntityNotFoundException("Внимание! Вещи с таким номером не существует!"));
     }
 
     private ItemDto setLastAndNextBooking(Item item, List<Booking> bookings) {
@@ -109,8 +114,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional(readOnly = true)
     @Override
     public Optional<ItemDto> getItem(long id, long userId) {
-        Item item = itemRepository.findById(id).orElseThrow(() ->
-                new EntityNotFoundException("Внимание! Пользователя или вещи с таким номером не существует!"));
+        Item item = findItem(id);
         log.info("Успешно получена информация о вещи с номером " + id);
         List<Booking> bookings = bookingRepository.findByItemId(id);
         List<Comment> comments = commentRepository.findAllByItemId(id);
@@ -144,9 +148,9 @@ public class ItemServiceImpl implements ItemService {
             } else {
                 bookings = bookingRepository.findAllByItemInAndStatusOrderByStartAsc(allItems, Status.APPROVED);
             }
-                List<Comment> comments = commentRepository.findAllByAuthorId(userId);
-                log.info("Успешно получена информация о всех сохранённых вещах!");
-            for (Item item: allItems) {
+            List<Comment> comments = commentRepository.findAllByAuthorId(userId);
+            log.info("Успешно получена информация о всех сохранённых вещах!");
+            for (Item item : allItems) {
                 ItemDto itemDto = setLastAndNextBooking(item, bookings);
                 if (bookingRepository.findByItemId(item.getId()).isEmpty()) {
                     itemDto.setLastBooking(null);
@@ -156,11 +160,7 @@ public class ItemServiceImpl implements ItemService {
                 result.add(itemDto);
             }
             return result;
-//                return allItems.stream()
-//                        .map(item -> setLastAndNextBooking(item, bookings))
-//                        .map(itemDto -> setComments(itemDto, comments))
-//                        .collect(Collectors.toList());
-            }
+        }
         throw new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!");
     }
 
@@ -191,12 +191,13 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Comment addComment(CommentDto commentDto, long itemId, long userId) {
         if (userRepository.existsById(userId) && getItem(itemId, userId).isPresent()) {
-            if (bookingRepository.findAllByBookerId(userId).stream().noneMatch(booking -> booking.getItem().getId() == itemId &&
-                    booking.getStatus().equals(Status.APPROVED))) {
+            List<Booking> bookingsByBookerId = bookingRepository.findAllByBookerId(userId);
+            if (bookingsByBookerId.stream().noneMatch(booking -> booking.getItem().getId() ==
+                    itemId && booking.getStatus().equals(Status.APPROVED))) {
                 throw new ValidationException("Внимание! Только тот, кто бронировал вещь, может оставить о ней " +
                         "отзыв!");
             }
-            if (bookingRepository.findAllByBookerId(userId).stream()
+            if (bookingsByBookerId.stream()
                     .filter(booking -> booking.getItem().getId() == itemId)
                     .noneMatch(booking -> booking.getEnd().isBefore(LocalDateTime.now()))) {
                 throw new ValidationException("Внимание! Пользователи могут оставлять отзывы только на завершенные " +
@@ -205,8 +206,7 @@ public class ItemServiceImpl implements ItemService {
             Comment comment = entityMapper.commentDtoToComment(commentDto);
             comment.setItem(entityMapper.itemDtoToItem(getItem(itemId, userId).orElseThrow(() ->
                     new EntityNotFoundException("Внимание! Пользователя или вещи с таким номером не существует!"))));
-            comment.setAuthor(userRepository.findById(userId).orElseThrow(() ->
-                    new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!")));
+            comment.setAuthor(userService.findUser(userId));
             comment.setCreated(LocalDateTime.now());
             log.info("Пользователь с номером " + userId + "успешно оставил комментарий к вещи с номером" + itemId + " !");
             return commentRepository.save(comment);

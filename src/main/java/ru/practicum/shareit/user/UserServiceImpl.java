@@ -31,8 +31,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public User updateUser(UserDto userDto, long id) {
-        User user = userRepository.findById(id).orElseThrow(() ->
-                new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!"));
+        User user = findUser(id);
         if (userDto.getName() == null) {
             userDto.setName(user.getName());
         }
@@ -42,6 +41,11 @@ public class UserServiceImpl implements UserService {
         log.info("Информация о пользователе " + id + " успешно обновлена!");
         userDto.setId(id);
         return userRepository.save(entityMapper.userDtoToUser(userDto));
+    }
+
+    public User findUser(long id) {
+        return userRepository.findById(id).orElseThrow(() ->
+                new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!"));
     }
 
     @Transactional(readOnly = true)
