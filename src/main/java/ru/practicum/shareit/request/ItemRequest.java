@@ -1,15 +1,19 @@
 package ru.practicum.shareit.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import ru.practicum.shareit.user.User;
 
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * TODO Sprint add-item-requests.
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "item_requests")
 public class ItemRequest {
@@ -20,8 +24,12 @@ public class ItemRequest {
     @Column(nullable = false)
     private String description;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(referencedColumnName = "user_id")
+    @JoinColumn(name = "user_id")
     private User requester;
     @Column(nullable = false)
-    private LocalDate created;
+    private LocalDateTime created;
+
+    public ItemRequest(String description) {
+        this.description = description;
+    }
 }

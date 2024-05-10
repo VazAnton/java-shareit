@@ -13,9 +13,6 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.dto.UserDto;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Component
 public class EntityMapperImpl implements EntityMapper {
 
@@ -82,6 +79,9 @@ public class EntityMapperImpl implements EntityMapper {
 
     @Override
     public ItemDto itemToItemDto(Item item) {
+        if (item == null) {
+            return null;
+        }
         return new ItemDto(item.getId(), item.getName(), item.getDescription(), item.getAvailable());
     }
 
@@ -120,15 +120,5 @@ public class EntityMapperImpl implements EntityMapper {
         commentDto.setAuthorName(comment.getAuthor().getName());
         commentDto.setCreated(comment.getCreated());
         return commentDto;
-    }
-
-    @Override
-    public List<ItemDto> itemsToDtoList(List<Item> items) {
-        return items.stream().map(this::itemToItemDto).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<Item> itemsDtoToItemsList(List<ItemDto> itemsDto) {
-        return itemsDto.stream().map(this::itemDtoToItem).collect(Collectors.toList());
     }
 }

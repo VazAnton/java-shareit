@@ -12,8 +12,6 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.dto.UserDto;
 
-import java.util.List;
-
 public interface EntityMapper {
 
     Booking bookingDtoToBooking(BookingDto bookingDto);
@@ -37,8 +35,4 @@ public interface EntityMapper {
     Comment commentDtoToComment(CommentDto commentDto);
 
     CommentDto commentToCommentDto(Comment comment);
-
-    List<ItemDto> itemsToDtoList(List<Item> items);
-
-    List<Item> itemsDtoToItemsList(List<ItemDto> itemsDto);
 }
