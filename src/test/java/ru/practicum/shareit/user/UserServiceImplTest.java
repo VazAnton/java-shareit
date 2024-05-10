@@ -16,7 +16,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 @Transactional
@@ -33,6 +32,7 @@ public class UserServiceImplTest {
     User userDtoToUser;
     User user1;
     User user2;
+
     @BeforeEach
     public void setup() {
         userDto = new UserDto(
