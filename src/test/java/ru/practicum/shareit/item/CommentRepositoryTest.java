@@ -1,97 +1,86 @@
 package ru.practicum.shareit.item;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DataJpaTest(properties = "db.name=test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class ItemRepositoryTest {
+public class CommentRepositoryTest {
 
     @Autowired
     TestEntityManager em;
     @Autowired
+    UserRepository userRepository;
+    @Autowired
     ItemRepository itemRepository;
     @Autowired
-    UserRepository userRepository;
+    CommentRepository commentRepository;
 
     @Test
     public void contextLoads() {
-        assertNotNull(em);
+        Assertions.assertNotNull(em);
     }
 
     @Test
-    public void checkSaveItemInDb() {
-        Item item = new Item(1L,
-                "Кухонный стол",
-                "Стол для празднования",
-                true);
-
-        Item savedItem = itemRepository.save(item);
-
-        assertNotNull(savedItem);
-    }
-
-    @Test
-    public void checkFindAllByOwnerIdOrderByIdDesc() {
+    public void checkAddComment() {
+        LocalDateTime now = LocalDateTime.now();
         Item item = new Item(1L,
                 "Кухонный стол",
                 "Стол для празднования",
                 true);
         User user = new User(1L, "user1", "user@user.com");
         userRepository.save(user);
-        item.setOwner(user);
-        Pageable pageable = PageRequest.of(0, 10);
-
         itemRepository.save(item);
+        Comment comment = new Comment(1L, "Add comment from user1", item, user, now);
 
-        assertEquals(1, itemRepository.findAllByOwnerIdOrderByIdDesc(user.getId(), pageable).getContent().size());
+        assertThat(commentRepository.save(comment))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(comment);
     }
 
     @Test
-    public void checkSearchByText() {
-        Item item = new Item(1L,
-                "Кухонный стол",
-                "Стол для празднования",
-                true);
-        itemRepository.save(item);
-
-        assertEquals(1, itemRepository.searchByText("Кух").size());
-    }
-
-    @Test
-    public void checkSearchByTextLikePage() {
-        Item item = new Item(1L,
-                "Кухонный стол",
-                "Стол для празднования",
-                true);
-        itemRepository.save(item);
-        Pageable pageable = PageRequest.of(0, 10);
-
-        assertEquals(1, itemRepository.searchByTextLikePage("Кух", pageable).getContent().size());
-    }
-
-    @Test
-    public void checkFindAllByOwnerId() {
+    public void checkFindAllByAuthorId() {
+        LocalDateTime now = LocalDateTime.now();
         Item item = new Item(1L,
                 "Кухонный стол",
                 "Стол для празднования",
                 true);
         User user = new User(1L, "user1", "user@user.com");
         userRepository.save(user);
-        item.setOwner(user);
-
         itemRepository.save(item);
+        Comment comment = new Comment(1L, "Add comment from user1", item, user, now);
 
-        assertEquals(1, itemRepository.findAllByOwnerId(user.getId()).size());
+        commentRepository.save(comment);
+
+        assertEquals(1, commentRepository.findAllByAuthorId(user.getId()).size());
+    }
+
+    @Test
+    public void checkFindAllByItemId() {
+        LocalDateTime now = LocalDateTime.now();
+        Item item = new Item(1L,
+                "Кухонный стол",
+                "Стол для празднования",
+                true);
+        User user = new User(1L, "user1", "user@user.com");
+        userRepository.save(user);
+        itemRepository.save(item);
+        Comment comment = new Comment(1L, "Add comment from user1", item, user, now);
+
+        commentRepository.save(comment);
+
+        assertEquals(1, commentRepository.findAllByItemId(item.getId()).size());
     }
 }

@@ -8,24 +8,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.dto.LastBooking;
-import ru.practicum.shareit.booking.dto.NextBooking;
 import ru.practicum.shareit.booking.dto.ShortBookingDto;
 import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.exception.UnsupportedStateException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.Comment;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.ItemServiceImpl;
-import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.mappers.EntityMapper;
-import ru.practicum.shareit.request.ItemRequest;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserServiceImpl;
-import ru.practicum.shareit.user.dto.UserDto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -53,74 +46,30 @@ public class BookingServiceImplTest {
     UserServiceImpl userService;
     @Mock
     EntityMapper entityMapper;
-    UserDto userDto;
     User user1;
     User user2;
-    ItemRequestDto itemRequestDto;
-    ItemRequest itemRequest;
     ItemDto itemDto;
-    ItemDto itemDto2;
     Item item;
-    Item item2;
     ShortBookingDto shortBookingDto;
     Booking bookingBeforePatch;
-    Booking booking2;
-    Booking bookingAfterPatch;
-    LastBooking lastBooking;
-    NextBooking nextBooking;
-    CommentDto commentDto;
-    CommentDto commentDto2;
-    CommentDto commentDto3;
-    Comment comment;
-    Comment comment2;
-    Comment comment3;
 
     @BeforeEach
     public void setup() {
         LocalDateTime now = LocalDateTime.now();
-        userDto = new UserDto(
-                1L,
-                "user",
-                "user@user.com");
         user1 = new User(1L, "user1", "user@user.com");
         user2 = new User(2L, "user2", "user@another.com");
-        itemRequestDto = new ItemRequestDto(
-                1L,
-                "Хотел бы воспользоваться щёткой для обуви",
-                LocalDateTime.now());
-        itemRequest = new ItemRequest(1L, "Хотел бы воспользоваться щёткой для обуви", user1,
-                itemRequestDto.getCreated());
         itemDto = new ItemDto(
                 1L,
                 "Кухонный стол",
                 "Стол для празднования",
                 true);
-        itemDto2 = new ItemDto(2L, "Кухонный стул",
-                "Стул для празднования",
-                true);
         item = new Item(1L, itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable());
-        item2 = new Item(2L, itemDto2.getName(), itemDto2.getDescription(), itemDto2.getAvailable());
         shortBookingDto = new ShortBookingDto(
                 1L,
                 LocalDateTime.of(2024, 5, 25, 20, 30),
                 LocalDateTime.of(2024, 5, 25, 22, 50));
         bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
                 Status.WAITING);
-        booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
-        bookingAfterPatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
-                Status.APPROVED);
-        commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
-                now.plusMinutes(5L));
-        commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
-                now.minusDays(5L));
-        comment = new Comment(1L, "Add comment from user1", item, user1, now);
-        commentDto = new CommentDto(1L, "Add comment from user1", "user", comment.getCreated());
-        comment2 = new Comment(2L, "Add new comment from user1", item, user1,
-                now.plusMinutes(5L));
-        comment3 = new Comment(2L, "Add new comment from user1", item, user1,
-                now.minusDays(5L));
-        lastBooking = new LastBooking(1L, user1.getId());
-        nextBooking = new NextBooking(1L, user1.getId());
     }
 
     @Test
@@ -272,6 +221,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void updateBookingShouldThrowValidationExceptionIfStatusIsApprovedYet() {
+        Booking bookingAfterPatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.APPROVED);
         when(bookingRepository.findById(bookingAfterPatch.getId()))
                 .thenReturn(Optional.of(bookingAfterPatch));
         item.setOwner(user2);
@@ -283,6 +234,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void checkApprovedBooking() {
+        Booking bookingAfterPatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.APPROVED);
         when(bookingRepository.findById(bookingBeforePatch.getId()))
                 .thenReturn(Optional.of(bookingBeforePatch));
         item.setOwner(user2);
@@ -298,6 +251,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void checkRejectBooking() {
+        Booking bookingAfterPatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.APPROVED);
         when(bookingRepository.findById(bookingBeforePatch.getId()))
                 .thenReturn(Optional.of(bookingBeforePatch));
         item.setOwner(user2);
@@ -338,6 +293,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void checkGetBookingsByUserIfStateIsWaiting() {
+        LocalDateTime now = LocalDateTime.now();
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
         when(userRepository.existsById(user1.getId()))
                 .thenReturn(true);
         List<Booking> bookings = new ArrayList<>();
@@ -355,6 +312,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void checkGetBookingsByUserIfStateIsAll() {
+        LocalDateTime now = LocalDateTime.now();
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
         when(userRepository.existsById(user1.getId()))
                 .thenReturn(true);
         List<Booking> bookings = new ArrayList<>();
@@ -371,6 +330,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void checkGetBookingsByUserIfStateIsRejected() {
+        Booking bookingAfterPatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.APPROVED);
         when(userRepository.existsById(user1.getId()))
                 .thenReturn(true);
         List<Booking> bookings = new ArrayList<>();
@@ -402,6 +363,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void checkGetBookingsByOwnerIfStatusWaiting() {
+        LocalDateTime now = LocalDateTime.now();
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
         when(userRepository.existsById(user2.getId()))
                 .thenReturn(true);
         List<Booking> bookings = new ArrayList<>();
@@ -424,6 +387,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void checkGetBookingsByOwnerIfStatusIsAll() {
+        LocalDateTime now = LocalDateTime.now();
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
         when(userRepository.existsById(user2.getId()))
                 .thenReturn(true);
         List<Booking> bookings = new ArrayList<>();
@@ -443,6 +408,8 @@ public class BookingServiceImplTest {
 
     @Test
     public void checkGetBookingsByOwnerIfStateIsRejected() {
+        Booking bookingAfterPatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.APPROVED);
         when(userRepository.existsById(user2.getId()))
                 .thenReturn(true);
         List<Booking> bookings = new ArrayList<>();

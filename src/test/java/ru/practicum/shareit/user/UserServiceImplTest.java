@@ -29,9 +29,7 @@ public class UserServiceImplTest {
     @Mock
     EntityMapper entityMapper;
     UserDto userDto;
-    User userDtoToUser;
     User user1;
-    User user2;
 
     @BeforeEach
     public void setup() {
@@ -39,13 +37,12 @@ public class UserServiceImplTest {
                 1L,
                 "user",
                 "user@user.com");
-        userDtoToUser = new User(userDto.getId(), userDto.getName(), userDto.getEmail());
         user1 = new User(1L, "user", "user@user.com");
-        user2 = new User(2L, "user2", "user@another.com");
     }
 
     @Test
     public void checkAddUser() {
+        User userDtoToUser = new User(userDto.getId(), userDto.getName(), userDto.getEmail());
         when(entityMapper.userDtoToUser(userDto))
                 .thenReturn(userDtoToUser);
         when(userRepository.save(entityMapper.userDtoToUser(userDto)))
@@ -60,6 +57,7 @@ public class UserServiceImplTest {
 
     @Test
     public void checkUpdateUser() {
+        User userDtoToUser = new User(userDto.getId(), userDto.getName(), userDto.getEmail());
         when(entityMapper.userDtoToUser(userDto))
                 .thenReturn(userDtoToUser);
         when(userRepository.save(entityMapper.userDtoToUser(userDto)))
@@ -86,6 +84,7 @@ public class UserServiceImplTest {
 
     @Test
     public void checkUpdateUserIfNameAndEmailIsNull() {
+        User userDtoToUser = new User(userDto.getId(), userDto.getName(), userDto.getEmail());
         UserDto userDtoWithoutNameAndEmail = new UserDto(userDto.getId(), null, null);
         when(entityMapper.userDtoToUser(userDtoWithoutNameAndEmail))
                 .thenReturn(userDtoToUser);
@@ -130,6 +129,7 @@ public class UserServiceImplTest {
 
     @Test
     public void checkGetUsers() {
+        User user2 = new User(2L, "user2", "user@another.com");
         when(userRepository.findAll())
                 .thenReturn(List.of(user1, user2));
         when(userService.getUsers())

@@ -7,7 +7,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.booking.Booking;
-import ru.practicum.shareit.booking.Status;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.LastBooking;
 import ru.practicum.shareit.booking.dto.NextBooking;
@@ -40,21 +39,10 @@ public class EntityMapperTest {
     ItemRequestDto itemRequestDto;
     ItemRequest itemRequest;
     ItemDto itemDto;
-    ItemDto itemDto2;
     Item item;
-    Item item2;
     ShortBookingDto shortBookingDto;
-    Booking bookingBeforePatch;
-    Booking booking2;
-    Booking bookingAfterPatch;
-    LastBooking lastBooking;
-    NextBooking nextBooking;
     CommentDto commentDto;
-    CommentDto commentDto2;
-    CommentDto commentDto3;
     Comment comment;
-    Comment comment2;
-    Comment comment3;
 
     @BeforeEach
     public void setup() {
@@ -75,32 +63,13 @@ public class EntityMapperTest {
                 "Кухонный стол",
                 "Стол для празднования",
                 true);
-        itemDto2 = new ItemDto(2L, "Кухонный стул",
-                "Стул для празднования",
-                true);
         item = new Item(1L, itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable());
-        item2 = new Item(2L, itemDto2.getName(), itemDto2.getDescription(), itemDto2.getAvailable());
         shortBookingDto = new ShortBookingDto(
                 0L,
                 LocalDateTime.of(2024, 5, 25, 20, 30),
                 LocalDateTime.of(2024, 5, 25, 22, 50));
-        bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
-                Status.WAITING);
-        booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
-        bookingAfterPatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
-                Status.APPROVED);
-        commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
-                now.plusMinutes(5L));
-        commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
-                now.minusDays(5L));
         comment = new Comment(1L, "Add comment from user1", item, user1, now);
         commentDto = new CommentDto(1L, "Add comment from user1", "user", comment.getCreated());
-        comment2 = new Comment(2L, "Add new comment from user1", item, user1,
-                now.plusMinutes(5L));
-        comment3 = new Comment(2L, "Add new comment from user1", item, user1,
-                now.minusDays(5L));
-        lastBooking = new LastBooking(1L, user1.getId());
-        nextBooking = new NextBooking(1L, user1.getId());
     }
 
     @Test

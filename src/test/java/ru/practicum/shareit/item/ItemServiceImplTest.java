@@ -14,8 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.Status;
-import ru.practicum.shareit.booking.dto.LastBooking;
-import ru.practicum.shareit.booking.dto.NextBooking;
 import ru.practicum.shareit.booking.dto.ShortBookingDto;
 import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -28,7 +26,6 @@ import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserServiceImpl;
-import ru.practicum.shareit.user.dto.UserDto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -60,23 +57,10 @@ public class ItemServiceImplTest {
     UserServiceImpl userService;
     @Mock
     RequestRepository requestRepository;
-    UserDto userDto;
     User user1;
-    ItemRequestDto itemRequestDto;
-    ItemRequest itemRequest;
     ItemDto itemDto;
-    ItemDto itemDto2;
     Item item;
-    Item item2;
     ShortBookingDto shortBookingDto;
-    Booking bookingBeforePatch;
-    Booking booking2;
-    Booking bookingAfterPatch;
-    LastBooking lastBooking;
-    NextBooking nextBooking;
-    CommentDto commentDto;
-    CommentDto commentDto2;
-    CommentDto commentDto3;
     Comment comment;
     Comment comment2;
     Comment comment3;
@@ -84,52 +68,32 @@ public class ItemServiceImplTest {
     @BeforeEach
     public void setup() {
         LocalDateTime now = LocalDateTime.now();
-        userDto = new UserDto(
-                1L,
-                "user",
-                "user@user.com");
         user1 = new User(1L, "user1", "user@user.com");
-        itemRequestDto = new ItemRequestDto(
-                1L,
-                "Хотел бы воспользоваться щёткой для обуви",
-                LocalDateTime.now());
-        itemRequest = new ItemRequest(1L, "Хотел бы воспользоваться щёткой для обуви", user1,
-                itemRequestDto.getCreated());
         itemDto = new ItemDto(
                 1L,
                 "Кухонный стол",
                 "Стол для празднования",
                 true);
-        itemDto2 = new ItemDto(2L, "Кухонный стул",
-                "Стул для празднования",
-                true);
         item = new Item(1L, itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable());
-        item2 = new Item(2L, itemDto2.getName(), itemDto2.getDescription(), itemDto2.getAvailable());
         shortBookingDto = new ShortBookingDto(
                 0L,
                 LocalDateTime.of(2024, 5, 25, 20, 30),
                 LocalDateTime.of(2024, 5, 25, 22, 50));
-        bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
-                Status.WAITING);
-        booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
-        bookingAfterPatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
-                Status.APPROVED);
-        commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
-                now.plusMinutes(5L));
-        commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
-                now.minusDays(5L));
         comment = new Comment(1L, "Add comment from user1", item, user1, now);
-        commentDto = new CommentDto(1L, "Add comment from user1", "user", comment.getCreated());
         comment2 = new Comment(2L, "Add new comment from user1", item, user1,
                 now.plusMinutes(5L));
         comment3 = new Comment(2L, "Add new comment from user1", item, user1,
                 now.minusDays(5L));
-        lastBooking = new LastBooking(1L, user1.getId());
-        nextBooking = new NextBooking(1L, user1.getId());
     }
 
     @Test
     public void checkAddItem() {
+        ItemRequestDto itemRequestDto = new ItemRequestDto(
+                1L,
+                "Хотел бы воспользоваться щёткой для обуви",
+                LocalDateTime.now());
+        ItemRequest itemRequest = new ItemRequest(1L, "Хотел бы воспользоваться щёткой для обуви", user1,
+                itemRequestDto.getCreated());
         when(entityMapper.itemDtoToItem(itemDto))
                 .thenReturn(item);
         when(userService.findUser(user1.getId()))
@@ -206,6 +170,16 @@ public class ItemServiceImplTest {
 
     @Test
     public void checkGetItem() {
+        LocalDateTime now = LocalDateTime.now();
+        Booking bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item,
+                user1, Status.WAITING);
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
+        CommentDto commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.plusMinutes(5L));
+        CommentDto commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.minusDays(5L));
         List<Comment> comments = new ArrayList<>();
         comments.add(comment);
         comments.add(comment2);
@@ -256,6 +230,8 @@ public class ItemServiceImplTest {
 
     @Test
     public void checkGetItemIfBookingsIsNull() {
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
         List<Comment> comments = new ArrayList<>();
         comments.add(comment);
         when(itemRepository.findById(item.getId()))
@@ -275,6 +251,16 @@ public class ItemServiceImplTest {
 
     @Test
     public void checkGetItemsIfFromAndSizeIsNull() {
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
+        LocalDateTime now = LocalDateTime.now();
+        Booking bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.WAITING);
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
+        CommentDto commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.plusMinutes(5L));
+        CommentDto commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.minusDays(5L));
         List<Item> items = new ArrayList<>();
         items.add(item);
         List<Booking> bookings = new ArrayList<>();
@@ -319,6 +305,16 @@ public class ItemServiceImplTest {
 
     @Test
     public void checkGetItemsIfFromAndSizeIsNotNull() {
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
+        LocalDateTime now = LocalDateTime.now();
+        Booking bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.WAITING);
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
+        CommentDto commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.plusMinutes(5L));
+        CommentDto commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.minusDays(5L));
         List<Item> items = new ArrayList<>();
         items.add(item);
         List<Booking> bookings = new ArrayList<>();
@@ -361,6 +357,16 @@ public class ItemServiceImplTest {
 
     @Test
     public void checkGetItemsIfFromAndSizeIsNullAndBookingsIsEmpty() {
+        LocalDateTime now = LocalDateTime.now();
+        Booking bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item,
+                user1, Status.WAITING);
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
+        CommentDto commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.plusMinutes(5L));
+        CommentDto commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.minusDays(5L));
         List<Item> items = new ArrayList<>();
         items.add(item);
         List<Booking> bookings = new ArrayList<>();
@@ -447,11 +453,27 @@ public class ItemServiceImplTest {
 
     @Test
     public void addCommentShouldThrowExceptionIfUserAndItemNotExists() {
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
         assertThrows(EntityNotFoundException.class, () -> itemService.addComment(commentDto, 100L, user1.getId()));
     }
 
     @Test
     public void addCommentShouldThrowValidationException() {
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
+        LocalDateTime now = LocalDateTime.now();
+        Booking bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.WAITING);
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
+        ItemDto itemDto2 = new ItemDto(2L, "Кухонный стул",
+                "Стул для празднования",
+                true);
+        Item item2 = new Item(2L, itemDto2.getName(), itemDto2.getDescription(), itemDto2.getAvailable());
+        CommentDto commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.plusMinutes(5L));
+        CommentDto commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.minusDays(5L));
         when(userRepository.existsById(user1.getId()))
                 .thenReturn(true);
         List<Comment> comments = new ArrayList<>();
@@ -485,6 +507,13 @@ public class ItemServiceImplTest {
 
     @Test
     public void addCommentShouldThrowValidationExceptionTo() {
+        LocalDateTime now = LocalDateTime.now();
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
+        CommentDto commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.plusMinutes(5L));
+        CommentDto commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
+                now.minusDays(5L));
         when(userRepository.existsById(user1.getId()))
                 .thenReturn(true);
         List<Comment> comments = new ArrayList<>();
@@ -518,6 +547,12 @@ public class ItemServiceImplTest {
 
     @Test
     public void checkAddComment() {
+        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
+                comment.getCreated());
+        LocalDateTime now = LocalDateTime.now();
+        Booking bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
+                Status.WAITING);
+        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
         when(userRepository.existsById(user1.getId()))
                 .thenReturn(true);
         List<Comment> comments = new ArrayList<>();

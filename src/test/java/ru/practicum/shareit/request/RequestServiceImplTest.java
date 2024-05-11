@@ -49,9 +49,7 @@ public class RequestServiceImplTest {
     User user1;
     ItemRequestDto itemRequestDto;
     ItemRequest itemRequest;
-    ItemRequestDto itemRequestDtoAfterSave;
     ItemDto itemDto;
-    Item item;
 
     @BeforeEach
     public void setup() {
@@ -62,14 +60,11 @@ public class RequestServiceImplTest {
                 LocalDateTime.now());
         itemRequest = new ItemRequest(1L, "Хотел бы воспользоваться щёткой для обуви", user1,
                 itemRequestDto.getCreated());
-        itemRequestDtoAfterSave = new ItemRequestDto(itemRequest.getId(), itemRequest.getDescription(),
-                itemRequest.getCreated());
         itemDto = new ItemDto(
                 1L,
                 "Кухонный стол",
                 "Стол для празднования",
                 true);
-        item = new Item(1L, itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable());
     }
 
     @Test
@@ -89,6 +84,7 @@ public class RequestServiceImplTest {
 
     @Test
     public void checkGetRequest() {
+        Item item = new Item(1L, itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable());
         when(userService.findUser(user1.getId()))
                 .thenReturn(user1);
         when(requestMapper.requestToRequestDto(itemRequest))
@@ -118,6 +114,7 @@ public class RequestServiceImplTest {
 
     @Test
     public void checkGetYoursRequest() {
+        Item item = new Item(1L, itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable());
         when(userService.findUser(user1.getId()))
                 .thenReturn(user1);
         when(requestMapper.requestToRequestDto(itemRequest))
@@ -140,6 +137,7 @@ public class RequestServiceImplTest {
 
     @Test
     public void checkGetOtherRequest() {
+        Item item = new Item(1L, itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable());
         when(requestRepository.findAll())
                 .thenReturn(List.of(itemRequest));
         when(itemRepository.findAll())
