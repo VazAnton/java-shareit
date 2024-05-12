@@ -12,18 +12,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Transactional
 @Slf4j
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -33,7 +30,9 @@ public class UserControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-    private ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private UserRepository userRepository;
+    private final ObjectMapper mapper = new ObjectMapper();
     private UserDto userDtoBeforeSave;
     private User userAfterSave;
 
@@ -58,11 +57,25 @@ public class UserControllerIntegrationTest {
 
     @Test
     @Order(1)
+    public void checkUpdateUserIfUserExists() throws Exception {
+        setup();
+        userRepository.save(userAfterSave);
+
+        mockMvc.perform(patch("/users/{id}", 1L)
+                        .content(mapper.writeValueAsString(userDtoBeforeSave))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(2)
     public void updateUserShouldThrowNotFoundException() throws Exception {
         setup();
 
         mockMvc.perform(patch("/users/{id}", 100L)
-                        .content(mapper.writeValueAsString(userDtoBeforeSave))
+                        .content(mapper.writeValueAsString(userAfterSave))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -70,21 +83,24 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     public void getUserShouldThrowExceptionIfUserNotExists() throws Exception {
         mockMvc.perform(get("/users/{id}", 100L))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     public void checkGetUsers() throws Exception {
         setup();
         User user1 = new User(1L, "user1", "user@user.com");
-        List<User> users = new ArrayList<>();
-        users.add(user1);
-
+        User userFromDb = userRepository.save(user1);
         mockMvc.perform(get("/users"))
                 .andExpectAll(status().isOk());
+
+        assertThat(userFromDb)
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(user1);
     }
 }
