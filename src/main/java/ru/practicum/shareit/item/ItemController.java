@@ -23,7 +23,11 @@ public class ItemController {
 
     @PostMapping
     public ItemDto addItem(@RequestBody @Valid ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") long userId) {
-        return entityMapper.itemToItemDto(itemService.addItem(itemDto, userId));
+        ItemDto itemDtoAfterSave = entityMapper.itemToItemDto(itemService.addItem(itemDto, userId));
+        if (itemDto.getRequestId() != null) {
+            itemDtoAfterSave.setRequestId(itemDto.getRequestId());
+        }
+        return itemDtoAfterSave;
     }
 
     @PatchMapping("/{itemId}")
@@ -39,8 +43,10 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getItems(@RequestHeader("X-Sharer-User-Id") long userId) {
-        return itemService.getItems(userId);
+    public List<ItemDto> getItems(@RequestHeader("X-Sharer-User-Id") long userId,
+                                  @RequestParam(required = false) Long from,
+                                  @RequestParam(required = false) Integer size) {
+        return itemService.getItems(userId, from, size);
     }
 
     @DeleteMapping("/{itemId}")
@@ -49,8 +55,10 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItem(@RequestParam(required = false) String text) {
-        return itemService.searchItem(text);
+    public List<ItemDto> searchItem(@RequestParam(required = false) String text,
+                                    @RequestParam(required = false) Integer from,
+                                    @RequestParam(required = false) Integer size) {
+        return itemService.searchItem(text, from, size);
     }
 
     @PostMapping("/{itemId}/comment")

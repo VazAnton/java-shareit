@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.shareit.exception.EntityNotFoundException;
-import ru.practicum.shareit.exception.IncorrectDataException;
 import ru.practicum.shareit.exception.UnsupportedStateException;
 import ru.practicum.shareit.exception.ValidationException;
 
@@ -13,12 +12,6 @@ import java.util.Map;
 
 @RestControllerAdvice("ru.practicum.shareit")
 public class ErrorHandler {
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> duplicateHandler(final IncorrectDataException e) {
-        return Map.of("Ошибка при передаче данных.", e.getMessage());
-    }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)

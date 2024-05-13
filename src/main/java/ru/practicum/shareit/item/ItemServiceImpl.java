@@ -2,6 +2,8 @@ package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
@@ -12,6 +14,8 @@ import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.mappers.EntityMapper;
+import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.RequestRepository;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserServiceImpl;
 
@@ -25,6 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
@@ -33,17 +38,21 @@ public class ItemServiceImpl implements ItemService {
     private final CommentRepository commentRepository;
     private final EntityMapper entityMapper;
     private final UserServiceImpl userService;
+    private final RequestRepository requestRepository;
 
-    @Transactional
     @Override
     public Item addItem(ItemDto itemDto, long userId) {
         Item item = entityMapper.itemDtoToItem(itemDto);
         item.setOwner(userService.findUser(userId));
+        if (itemDto.getRequestId() != null) {
+            ItemRequest itemRequest = requestRepository.findById(itemDto.getRequestId()).orElseThrow(() ->
+                    new EntityNotFoundException("Внимание! Запроса с таким уникальным номером не существует!"));
+            item.setRequest(itemRequest);
+        }
         log.info("Информация о новой вещи успешно добавлена!");
         return itemRepository.save(item);
     }
 
-    @Transactional
     @Override
     public Item updateItem(ItemDto itemDto, long userId, long itemId) {
         if (userRepository.existsById(userId)) {
@@ -97,14 +106,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private ItemDto setComments(ItemDto itemDto, List<Comment> comments) {
-        comments.sort((comment1, comment2) -> {
-            if (comment1.getCreated().isBefore(comment2.getCreated())) {
-                return 1;
-            } else if (comment1.getCreated().isAfter(comment2.getCreated())) {
-                return -1;
-            }
-            return 0;
-        });
+        comments.sort(Comparator.comparing(Comment::getCreated));
         itemDto.setComments(comments.stream()
                 .map(entityMapper::commentToCommentDto)
                 .collect(Collectors.toList()));
@@ -118,6 +120,10 @@ public class ItemServiceImpl implements ItemService {
         log.info("Успешно получена информация о вещи с номером " + id);
         List<Booking> bookings = bookingRepository.findByItemId(id);
         List<Comment> comments = commentRepository.findAllByItemId(id);
+        if (bookings == null) {
+            return Optional.of(setComments(setLastAndNextBooking(item, null),
+                    comments));
+        }
         if (!bookings.isEmpty()) {
             ItemDto itemDto = setComments(setLastAndNextBooking(item, bookings),
                     comments);
@@ -134,8 +140,14 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<ItemDto> getItems(long userId) {
-        List<Item> allItems = itemRepository.findAllByOwnerId(userId);
+    public List<ItemDto> getItems(long userId, Long from, Integer size) {
+        List<Item> allItems;
+        if (from != null && size != null) {
+            Pageable pageable = PageRequest.of(from.intValue(), size);
+            allItems = itemRepository.findAllByOwnerIdOrderByIdDesc(userId, pageable).getContent();
+        } else {
+            allItems = itemRepository.findAllByOwnerId(userId);
+        }
         List<Item> itemsWithBookings;
         List<Booking> bookings;
         List<ItemDto> result = new ArrayList<>();
@@ -164,30 +176,37 @@ public class ItemServiceImpl implements ItemService {
         throw new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!");
     }
 
-    @Transactional
     @Override
     public void deleteItem(long id) {
         if (itemRepository.existsById(id)) {
             log.info("Информация о вещи с номером " + id + " успешно удалена!");
             itemRepository.deleteById(id);
+        } else {
+            throw new EntityNotFoundException("Внимание! Вещи с таким номером не существует!");
         }
-        throw new EntityNotFoundException("Внимание! Вещи с таким номером не существует!");
     }
 
     @Transactional(readOnly = true)
     @Override
-    public List<ItemDto> searchItem(String text) {
-        if (text != null && (!text.isEmpty() || !text.isBlank())) {
-            log.info("Успешно получена информация о вещи по её описанию!");
-            return itemRepository.searchByText(text).stream()
-                    .filter(Item::getAvailable)
+    public List<ItemDto> searchItem(String text, Integer from, Integer size) {
+        List<ItemDto> itemsByDescription;
+        if (text == null || text.isEmpty() || text.isBlank()) {
+            log.info("Описание вещи не указано.");
+            return new ArrayList<>();
+        }
+        if (from != null && size != null) {
+            Pageable pageable = PageRequest.of(from, size);
+            return itemRepository.searchByTextLikePage(text, pageable)
+                    .getContent().stream()
                     .map(entityMapper::itemToItemDto).collect(Collectors.toList());
         }
-        log.info("Описание вещи не указано.");
-        return new ArrayList<>();
+        log.info("Успешно получена информация о вещи по её описанию!");
+        itemsByDescription = itemRepository.searchByText(text).stream()
+                .filter(Item::getAvailable)
+                .map(entityMapper::itemToItemDto).collect(Collectors.toList());
+        return itemsByDescription;
     }
 
-    @Transactional
     @Override
     public Comment addComment(CommentDto commentDto, long itemId, long userId) {
         if (userRepository.existsById(userId) && getItem(itemId, userId).isPresent()) {
@@ -208,7 +227,7 @@ public class ItemServiceImpl implements ItemService {
                     new EntityNotFoundException("Внимание! Пользователя или вещи с таким номером не существует!"))));
             comment.setAuthor(userService.findUser(userId));
             comment.setCreated(LocalDateTime.now());
-            log.info("Пользователь с номером " + userId + "успешно оставил комментарий к вещи с номером" + itemId + " !");
+            log.info("Пользователь с номером " + userId + " успешно оставил комментарий к вещи с номером" + itemId + " !");
             return commentRepository.save(comment);
         }
         throw new EntityNotFoundException("Внимание! Пользователя или вещи с таким номером не существует!");

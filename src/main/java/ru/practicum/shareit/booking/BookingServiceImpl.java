@@ -2,6 +2,9 @@ package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.ShortBookingDto;
@@ -19,6 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class BookingServiceImpl implements BookingService {
@@ -54,7 +58,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
     public Booking addBooking(ShortBookingDto shortBookingDto, long userId) {
         Booking inMemoryBookingDto = entityMapper.shortBookingDtoToBooking(shortBookingDto);
         inMemoryBookingDto.setBooker(userService.findUser(userId));
@@ -67,22 +70,21 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
     public Booking updateBooking(long id, long userId, String approved) {
         Booking bookingFromDb = findBookingById(id);
         if (bookingFromDb.getItem().getOwner().getId() != userId) {
             throw new EntityNotFoundException("Внимание! Заявку на бронирование вещи может подтвердить только " +
                     "владелец вещи!");
         }
-        if (!Boolean.valueOf(approved).equals(true) && !Boolean.valueOf(approved).equals(false)) {
+        if (!approved.equals(String.valueOf(true)) && !approved.equals(String.valueOf(false))) {
             throw new IllegalArgumentException("Внимание! Значение параметра approved может быть только true или false!");
         } else {
-            if (Boolean.valueOf(approved).equals(true) && (bookingFromDb.getStatus().equals(Status.REJECTED)
+            if (approved.equals(String.valueOf(true)) && (bookingFromDb.getStatus().equals(Status.REJECTED)
                     || bookingFromDb.getStatus().equals(Status.WAITING))) {
                 bookingFromDb.setStatus(Status.APPROVED);
                 log.info("Заявка под номером " + id + " успешно одобрена!");
                 return bookingRepository.save(bookingFromDb);
-            } else if (Boolean.valueOf(approved).equals(false) && (bookingFromDb.getStatus().equals(Status.APPROVED)
+            } else if (approved.equals(String.valueOf(false)) && (bookingFromDb.getStatus().equals(Status.APPROVED)
                     || bookingFromDb.getStatus().equals(Status.WAITING))) {
                 bookingFromDb.setStatus(Status.REJECTED);
                 log.info("Заявка под номером " + id + " успешно одобрена!");
@@ -93,7 +95,7 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    public Booking findBookingById(long bookingId) {
+    private Booking findBookingById(long bookingId) {
         return bookingRepository.findById(bookingId).orElseThrow(() ->
                 new EntityNotFoundException("Внимание! Заявки на бронирование с таким номером не существует!"));
     }
@@ -114,53 +116,50 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    private List<Booking> getBookingByBookerAndStatus(long bookerId, Status status) {
-        return bookingRepository.findAllByBookerIdAndStatusEquals(bookerId, status);
-    }
-
     @Transactional(readOnly = true)
     @Override
-    public List<Booking> getBookingsByUser(long userId, String state) {
+    public List<Booking> getBookingsByUser(long userId, String state, Integer from, Integer size) {
         if (!userRepository.existsById(userId)) {
             throw new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!");
         }
+        if (from < 0) {
+            throw new IllegalArgumentException("Низя!");
+        }
         LocalDateTime now = LocalDateTime.now();
-        List<Booking> bookingsByBookerId = bookingRepository.findAllByBookerId(userId);
+        Sort sortByStart = Sort.by(Sort.Direction.DESC, "start");
+        Pageable pageable = PageRequest.of(from, size, sortByStart);
+        Pageable pageable1 = PageRequest.of(from / size, size, sortByStart);
         switch (state) {
             case "WAITING":
-                return getBookingByBookerAndStatus(userId, Status.WAITING).stream()
+                return bookingRepository.findAllByBookerIdAndStatusEquals(userId,
+                                Status.WAITING, pageable).getContent().stream()
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "PAST":
-                return bookingRepository.findAllByBookerIdAndEndIsBefore(userId, now).stream()
+                return bookingRepository.findAllByBookerIdAndEndIsBefore(userId, now, pageable)
+                        .getContent().stream()
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "CURRENT":
-                return bookingRepository.findAllByBookerIdAndStartIsBeforeOrderByIdAsc(userId, now).stream()
+                return bookingRepository.findAllByBookerIdAndStartIsBeforeOrderByIdAsc(userId, now, pageable)
+                        .getContent().stream()
                         .filter(booking -> booking.getEnd().isAfter(now))
                         .sorted(bookingDateComparator)
-                        .sorted((booking1, booking2) -> {
-                            if (booking1.getId() < booking2.getId()) {
-                                return -1;
-                            } else if (booking1.getId() > booking2.getId()) {
-                                return 1;
-                            }
-                            return 0;
-                        })
+                        .sorted(Comparator.comparingLong(Booking::getId))
                         .collect(Collectors.toList());
             case "FUTURE":
-                return bookingsByBookerId.stream()
+                return bookingRepository.findAllByBookerIdAndStartIsAfter(userId, now, pageable)
+                        .getContent().stream()
                         .filter(booking -> booking.getStart().isAfter(now))
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "REJECTED":
-                return getBookingByBookerAndStatus(userId, Status.REJECTED).stream()
+                return bookingRepository.findAllByBookerIdAndStatusEquals(userId,
+                                Status.REJECTED, pageable).getContent().stream()
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "ALL":
-                return bookingsByBookerId.stream()
-                        .sorted(bookingDateComparator)
-                        .collect(Collectors.toList());
+                return bookingRepository.findAllByBookerId(userId, pageable1).getContent();
             default:
                 throw new UnsupportedStateException("Unknown state: " + state);
         }
@@ -168,40 +167,41 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Booking> getBookingsByOwner(long userId, String state) {
+    public List<Booking> getBookingsByOwner(long userId, String state, Integer from, Integer size) {
         if (!userRepository.existsById(userId)) {
             throw new EntityNotFoundException("Внимание! Пользователя с таким номером не существует!");
         }
         LocalDateTime now = LocalDateTime.now();
-        List<Booking> bookings = bookingRepository.getAllBookingsInfoByOwner(userId);
+        Sort sortByStart = Sort.by(Sort.Direction.DESC, "start");
+        Pageable pageable = PageRequest.of(from, size, sortByStart);
         switch (state) {
             case "WAITING":
-                return bookings.stream()
+                return bookingRepository.getAllBookingsInfoByOwnerLikePage(userId, pageable).getContent().stream()
                         .filter(booking -> booking.getStatus().equals(Status.WAITING))
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "PAST":
-                return bookings.stream()
+                return bookingRepository.getAllBookingsInfoByOwnerLikePage(userId, pageable).getContent().stream()
                         .filter(booking -> booking.getEnd().isBefore(now))
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "CURRENT":
-                return bookings.stream()
+                return bookingRepository.getAllBookingsInfoByOwnerLikePage(userId, pageable).getContent().stream()
                         .filter(booking -> booking.getStart().isBefore(now) && booking.getEnd().isAfter(now))
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "FUTURE":
-                return bookings.stream()
+                return bookingRepository.getAllBookingsInfoByOwnerLikePage(userId, pageable).getContent().stream()
                         .filter(booking -> booking.getStart().isAfter(now))
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "REJECTED":
-                return bookings.stream()
+                return bookingRepository.getAllBookingsInfoByOwnerLikePage(userId, pageable).getContent().stream()
                         .filter(booking -> booking.getStatus().equals(Status.REJECTED))
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             case "ALL":
-                return bookings.stream()
+                return bookingRepository.getAllBookingsInfoByOwnerLikePage(userId, pageable).getContent().stream()
                         .sorted(bookingDateComparator)
                         .collect(Collectors.toList());
             default:
@@ -209,7 +209,6 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    @Transactional
     @Override
     public void deleteBooking(long id) {
         bookingRepository.deleteById(id);
