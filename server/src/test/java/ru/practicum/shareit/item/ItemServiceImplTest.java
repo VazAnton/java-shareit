@@ -253,60 +253,6 @@ public class ItemServiceImplTest {
                 .isNotNull();
     }
 
-//    @Test
-//    public void checkGetItemsIfFromAndSizeIsNull() {
-//        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
-//                comment.getCreated());
-//        LocalDateTime now = LocalDateTime.now();
-//        Booking bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item, user1,
-//                Status.WAITING);
-//        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
-//        CommentDto commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
-//                now.plusMinutes(5L));
-//        CommentDto commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
-//                now.minusDays(5L));
-//        List<Item> items = new ArrayList<>();
-//        items.add(item);
-//        List<Booking> bookings = new ArrayList<>();
-//        bookings.add(bookingBeforePatch);
-//        bookings.add(booking2);
-//        List<Comment> comments = new ArrayList<>();
-//        comments.add(comment);
-//        comments.add(comment2);
-//        comments.add(comment3);
-//        List<Item> itemsWithBookings;
-//        when(itemRepository.findAllByOwnerId(user1.getId()))
-//                .thenReturn(items);
-//        when(userRepository.existsById(user1.getId()))
-//                .thenReturn(true);
-//        when(bookingRepository.getAllBookingsInfoByOwner(user1.getId()))
-//                .thenReturn(bookings);
-//        when(bookingRepository.findByItemId(item.getId()))
-//                .thenReturn(bookings);
-//        itemsWithBookings = items.stream()
-//                .filter(item -> !bookings.isEmpty())
-//                .collect(Collectors.toList());
-//        when(bookingRepository.findAllByItemInAndStatusOrderByStartAsc(itemsWithBookings, Status.APPROVED))
-//                .thenReturn(bookings);
-//        when(commentRepository.findAllByAuthorId(user1.getId()))
-//                .thenReturn(comments);
-//        when(entityMapper.itemToItemDto(item))
-//                .thenReturn(itemDto);
-//        itemDto.setLastBooking(entityMapper.bookingToLastBooking(bookingBeforePatch));
-//        itemDto.setNextBooking(entityMapper.bookingToNextBooking(booking2));
-//        when(entityMapper.commentToCommentDto(comment))
-//                .thenReturn(commentDto);
-//        when(entityMapper.commentToCommentDto(comment2))
-//                .thenReturn(commentDto2);
-//        when(entityMapper.commentToCommentDto(comment3))
-//                .thenReturn(commentDto3);
-//        when(entityMapper.itemToItemDto(item))
-//                .thenReturn(itemDto);
-//
-//        assertThat(itemService.getItems(user1.getId(), null, null))
-//                .isNotNull();
-//    }
-
     @Test
     public void checkGetItemsIfFromAndSizeIsNotNull() {
         CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
@@ -330,7 +276,7 @@ public class ItemServiceImplTest {
         comments.add(comment3);
         Page<Item> pagedItems = new PageImpl<>(items);
         Pageable pageable = PageRequest.of(0, 20);
-        when(itemRepository.findAllByOwnerIdOrderByIdDesc(user1.getId(), pageable))
+        when(itemRepository.findAllByOwnerIdOrderByIdAsc(user1.getId(), pageable))
                 .thenReturn(pagedItems);
         when(userRepository.existsById(user1.getId()))
                 .thenReturn(true);
@@ -359,69 +305,11 @@ public class ItemServiceImplTest {
                 .isNotNull();
     }
 
-//    @Test
-//    public void checkGetItemsIfFromAndSizeIsNullAndBookingsIsEmpty() {
-//        LocalDateTime now = LocalDateTime.now();
-//        Booking bookingBeforePatch = new Booking(1L, shortBookingDto.getStart(), shortBookingDto.getEnd(), item,
-//                user1, Status.WAITING);
-//        Booking booking2 = new Booking(2L, now.plusDays(5L), now.plusDays(6L), item, user1, Status.WAITING);
-//        CommentDto commentDto = new CommentDto(1L, "Add comment from user1", "user",
-//                comment.getCreated());
-//        CommentDto commentDto2 = new CommentDto(2L, "Add new comment from user1", "user",
-//                now.plusMinutes(5L));
-//        CommentDto commentDto3 = new CommentDto(2L, "Add new comment from user1", "user",
-//                now.minusDays(5L));
-//        List<Item> items = new ArrayList<>();
-//        items.add(item);
-//        List<Booking> bookings = new ArrayList<>();
-//        List<Comment> comments = new ArrayList<>();
-//        comments.add(comment);
-//        comments.add(comment2);
-//        comments.add(comment3);
-//        when(itemRepository.findAllByOwnerId(user1.getId()))
-//                .thenReturn(items);
-//        when(userRepository.existsById(user1.getId()))
-//                .thenReturn(true);
-//        when(bookingRepository.getAllBookingsInfoByOwner(user1.getId()))
-//                .thenReturn(bookings);
-//        when(bookingRepository.findByItemId(item.getId()))
-//                .thenReturn(bookings);
-//        when(bookingRepository.findAllByItemInAndStatusOrderByStartAsc(items, Status.APPROVED))
-//                .thenReturn(bookings);
-//        when(commentRepository.findAllByAuthorId(user1.getId()))
-//                .thenReturn(comments);
-//        when(entityMapper.itemToItemDto(item))
-//                .thenReturn(itemDto);
-//        itemDto.setLastBooking(entityMapper.bookingToLastBooking(bookingBeforePatch));
-//        itemDto.setNextBooking(entityMapper.bookingToNextBooking(booking2));
-//        when(entityMapper.commentToCommentDto(comment))
-//                .thenReturn(commentDto);
-//        when(entityMapper.commentToCommentDto(comment2))
-//                .thenReturn(commentDto2);
-//        when(entityMapper.commentToCommentDto(comment3))
-//                .thenReturn(commentDto3);
-//        when(entityMapper.itemToItemDto(item))
-//                .thenReturn(itemDto);
-//
-//        assertThat(itemService.getItems(user1.getId(), null, null))
-//                .isNotNull();
-//    }
-
     @Test
     public void checkSearchItemsIfTextIsNull() {
         assertThat(itemService.searchItem(null, 1, 20))
                 .isEmpty();
     }
-
-//    @Test
-//    public void checkSearchItemsIfFromAndSizeIsNull() {
-//        when(itemRepository.searchByText(item.getName()))
-//                .thenReturn(List.of(item));
-//        when(entityMapper.itemToItemDto(item))
-//                .thenReturn(itemDto);
-//
-//        assertEquals(1, itemService.searchItem(item.getName(), null, null).size());
-//    }
 
     @Test
     public void checkSearchItemsIfFromAndSizeIsNotNull() {

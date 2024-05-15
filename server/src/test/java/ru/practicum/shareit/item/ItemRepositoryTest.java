@@ -54,7 +54,7 @@ public class ItemRepositoryTest {
 
         itemRepository.save(item);
 
-        assertEquals(1, itemRepository.findAllByOwnerIdOrderByIdDesc(user.getId(), pageable).getContent().size());
+        assertEquals(1, itemRepository.findAllByOwnerIdOrderByIdAsc(user.getId(), pageable).getContent().size());
     }
 
     @Test

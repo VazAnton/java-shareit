@@ -68,7 +68,7 @@ public class RequestServiceImpl implements RequestService {
             for (ItemDto itemDto : allItems) {
                 String commonPart = itemDto.getName().toLowerCase().substring(0, 4);
                 if (itemRequestDto.getDescription().contains(commonPart)) {
-                    itemRequestDto.setItems(itemService.searchItem(commonPart, null, null));
+                    itemRequestDto.setItems(itemService.searchItem(commonPart, 0, 20));
                     for (ItemDto requestsItem : itemRequestDto.getItems()) {
                         requestsItem.setRequestId(itemRequestDto.getId());
                     }

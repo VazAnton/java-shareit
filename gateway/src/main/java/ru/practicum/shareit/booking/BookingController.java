@@ -21,14 +21,14 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<Object> addBooking(@Valid @RequestBody ShortBookingDto shortBookingDto,
-                                              @RequestHeader("X-Sharer-User-Id") long userId) {
+                                             @RequestHeader("X-Sharer-User-Id") long userId) {
         return bookingClient.addBooking(shortBookingDto, userId);
     }
 
     @PatchMapping("/{bookingId}")
     public ResponseEntity<Object> updateBooking(@PathVariable long bookingId,
-                                 @RequestHeader("X-Sharer-User-Id") long userId,
-                                 @RequestParam String approved) {
+                                                @RequestHeader("X-Sharer-User-Id") long userId,
+                                                @RequestParam String approved) {
         return bookingClient.updateBooking(bookingId, userId, approved);
     }
 
@@ -39,20 +39,18 @@ public class BookingController {
 
     @GetMapping
     public ResponseEntity<Object> getBookings(@RequestHeader("X-Sharer-User-Id") long userId,
-                                     @RequestParam(defaultValue = "ALL") String state,
-                                     @RequestParam(defaultValue = "0") Integer from,
-                                     @RequestParam(defaultValue = "20") Integer size) {
-        State updatedState = State.valueOf(state);
-        return bookingClient.getBookingsByUser(userId, updatedState, from, size);
+                                              @RequestParam(defaultValue = "ALL") String state,
+                                              @RequestParam(defaultValue = "0") Integer from,
+                                              @RequestParam(defaultValue = "20") Integer size) {
+        return bookingClient.getBookingsByUser(userId, state, from, size);
     }
 
     @GetMapping("/owner")
     public ResponseEntity<Object> getOwnersBookings(@RequestHeader("X-Sharer-User-Id") long userId,
-                                           @RequestParam(defaultValue = "ALL") String state,
-                                           @RequestParam(defaultValue = "0") Integer from,
-                                           @RequestParam(defaultValue = "20") Integer size) {
-        State updatedState = State.valueOf(state);
-        return bookingClient.getBookingsByOwner(userId, updatedState, from, size);
+                                                    @RequestParam(defaultValue = "ALL") String state,
+                                                    @RequestParam(defaultValue = "0") Integer from,
+                                                    @RequestParam(defaultValue = "20") Integer size) {
+        return bookingClient.getBookingsByOwner(userId, state, from, size);
     }
 
     @DeleteMapping("/{bookingId}")

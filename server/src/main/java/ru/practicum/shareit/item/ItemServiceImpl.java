@@ -146,7 +146,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> getItems(long userId, Integer from, Integer size) {
         Pageable pageable = PageRequest.of(from, size);
-        List<Item> allItems = itemRepository.findAllByOwnerIdOrderByIdDesc(userId, pageable).getContent();
+        List<Item> allItems = itemRepository.findAllByOwnerIdOrderByIdAsc(userId, pageable).getContent();
         List<Item> itemsWithBookings;
         List<Booking> bookings;
         List<ItemDto> result = new ArrayList<>();
@@ -196,6 +196,7 @@ public class ItemServiceImpl implements ItemService {
         log.info("Успешно получена информация о вещи по её описанию!");
         return itemRepository.searchByTextLikePage(text, pageable)
                 .getContent().stream()
+                .filter(Item::getAvailable)
                 .map(entityMapper::itemToItemDto).collect(Collectors.toList());
     }
 
